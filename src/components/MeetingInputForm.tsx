@@ -22,6 +22,7 @@ import {cn} from "@/lib/utils";
 import {CalendarIcon} from "lucide-react";
 import {format} from "date-fns";
 import {useToast} from "@/hooks/use-toast";
+import {sendEmail} from "@/services/email";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -59,6 +60,13 @@ const MeetingInputForm = () => {
     'student3@example.com',
   ]);
 
+  const [selectedTime, setSelectedTime] = useState<string>("09:00");
+
+  useEffect(() => {
+    form.setValue("time", selectedTime);
+  }, [selectedTime, form.setValue]);
+
+
   useEffect(() => {
     // Load meetings from local storage on component mount
     const storedMeetings = localStorage.getItem('meetings');
@@ -80,6 +88,46 @@ const MeetingInputForm = () => {
       }
     }
   }, [form]);
+
+  const handleSendEmail = async (values: Meeting) => {
+    const emailList = values.participants;
+    if (!emailList || emailList.length === 0) {
+      toast({
+        title: "No participants added",
+        description: "Please add participants before sending the email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const email = {
+      to: values.participants,
+      subject: `Meeting: ${values.title} - ${format(values.date, 'PPP')}`,
+      body: `
+        <h2>Meeting Details</h2>
+        <p><strong>Title:</strong> ${values.title}</p>
+        <p><strong>Date:</strong> ${format(values.date, 'PPP')}</p>
+        <p><strong>Time:</strong> ${values.time}</p>
+        <p><strong>Description:</strong> ${values.description}</p>
+        <p>Please be on time and prepared for the meeting.</p>
+      `,
+    };
+
+    try {
+      await sendEmail(email);
+      toast({
+        title: "Email sent.",
+        description: "Email has been sent to the participants.",
+      });
+    } catch (error) {
+      console.error("Failed to send email", error);
+      toast({
+        title: "Failed to send email.",
+        description: "There was an error sending the email. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   function onSubmit(values: Meeting) {
     // Retrieve existing meetings from local storage
@@ -215,7 +263,7 @@ const MeetingInputForm = () => {
                     <Button
                       key={time}
                       variant={field.value === time ? "secondary" : "outline"}
-                      onClick={() => field.onChange(time)}
+                      onClick={() => setSelectedTime(time)}
                     >
                       {time}
                     </Button>
@@ -292,6 +340,14 @@ const MeetingInputForm = () => {
           )}
         />
         <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => form.handleSubmit(handleSendEmail)(form.getValues())}
+            className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80"
+          >
+            Send Email
+          </Button>
       </form>
     </Form>
   );
