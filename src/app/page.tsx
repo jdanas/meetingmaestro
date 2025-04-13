@@ -11,15 +11,13 @@ import * as React from "react";
 import {format, isSameDay} from "date-fns";
 import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from 'next/link';
+import WeeklyView from "@/components/WeeklyView";
 
 export default function Home() {
-    // Move state to parent component to properly update the sidebar
     const [selectedDate, setDate] = React.useState<Date | undefined>(new Date());
     const [meetingDates, setMeetingDates] = React.useState<Date[]>([]);
     const [formKey, setFormKey] = React.useState(Date.now());
 
-    // Callbacks for the forms to update the parent component
     const handleMeetingDatesChange = (newMeetingDates: Date[]) => {
         setMeetingDates(newMeetingDates);
     };
@@ -48,16 +46,17 @@ export default function Home() {
                   </SidebarMenuItem>
                   {meetingDates.map((meetingDate) => (
                     <SidebarMenuItem key={meetingDate.toISOString()}>
-                      <Link
-                        href={`/meeting/${format(meetingDate, "yyyy-MM-dd")}`}
+                      <Button
+                        variant="ghost"
                         className={cn(
                           "w-[240px] justify-start text-left font-normal hover:bg-secondary rounded-md px-2 py-1",
                           selectedDate && isSameDay(selectedDate, meetingDate) ? "bg-secondary" : "",
                         )}
+                        onClick={() => setDate(meetingDate)}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4"/>
                         {format(meetingDate, "PPP")}
-                      </Link>
+                      </Button>
                     </SidebarMenuItem>
                   ))}
                   <SidebarMenuItem>
@@ -117,9 +116,11 @@ export default function Home() {
             </div>
           </TabsContent>
         </Tabs>
+          <WeeklyView selectedDate={selectedDate} />
            <Toaster />
         </main>
       </div>
     </SidebarProvider>
   );
 }
+
