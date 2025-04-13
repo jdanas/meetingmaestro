@@ -1,5 +1,3 @@
-'use client';
-
 import React, {useEffect, useState, useRef} from 'react';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -320,9 +318,6 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
                       handleDateSelect(date);
                       field.onChange(date);
                     }}
-                    disabled={(date) =>
-                      date < new Date()
-                    }
                     initialFocus
                   />
                 </PopoverContent>
