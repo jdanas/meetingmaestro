@@ -79,6 +79,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
 
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [isTimeSelected, setIsTimeSelected] = useState(false); // New state
+    const [tempMeeting, setTempMeeting] = useState<Meeting | null>(null);
 
   useEffect(() => {
     form.setValue("time", selectedTime);
@@ -233,6 +234,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
       form.reset();
       setSelectedTime("09:00");
       setIsTimeSelected(false);
+        setTempMeeting(null); // Clear the temporary meeting
 
     } finally {
       setIsSubmitting(false);
@@ -284,7 +286,9 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
   const onTimeSelect = (time: string) => {
     setSelectedTime(time);
     form.setValue("time", time);
-    setIsTimeSelected(true); // Set the time selection status to true
+    setIsTimeSelected(true);
+      // Store the meeting data in the temporary state
+      setTempMeeting(form.getValues());
   };
 
   return (
