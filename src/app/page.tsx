@@ -1,7 +1,6 @@
 'use client'
 
 import MeetingInputForm from '@/components/MeetingInputForm';
-import WeeklyView from '@/components/WeeklyView';
 import {Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarProvider, SidebarTrigger} from '@/components/ui/sidebar';
 import {Button} from '@/components/ui/button';
 import {Calendar} from "@/components/ui/calendar";
@@ -12,6 +11,7 @@ import * as React from "react";
 import {format, isSameDay} from "date-fns";
 import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from 'next/link';
 
 export default function Home() {
     // Move state to parent component to properly update the sidebar
@@ -42,17 +42,16 @@ export default function Home() {
                   </SidebarMenuItem>
                   {meetingDates.map((meetingDate) => (
                     <SidebarMenuItem key={meetingDate.toISOString()}>
-                      <Button
-                        variant={"ghost"}
+                      <Link
+                        href={`/meeting/${format(meetingDate, "yyyy-MM-dd")}`}
                         className={cn(
-                          "w-[240px] justify-start text-left font-normal",
+                          "w-[240px] justify-start text-left font-normal hover:bg-secondary rounded-md px-2 py-1",
                           selectedDate && isSameDay(selectedDate, meetingDate) ? "bg-secondary" : "",
                         )}
-                        onClick={() => setDate(meetingDate)}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4"/>
                         {format(meetingDate, "PPP")}
-                      </Button>
+                      </Link>
                     </SidebarMenuItem>
                   ))}
                   <SidebarMenuItem>
@@ -118,4 +117,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
