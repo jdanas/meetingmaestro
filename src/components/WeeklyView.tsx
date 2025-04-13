@@ -124,22 +124,22 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
     };
 
   return (
-    <div>
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
-            <h2 className="text-lg font-semibold">Meetings for {format(selectedDate, 'PPP')}</h2>
+    <div className="w-full">
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Meetings for {format(selectedDate, 'PPP')}</h2>
             {selectedMeetings.length > 0 ? (
                 <div>
                     {selectedMeetings.map((meeting, index) => (
-                        <div key={index} className="mb-4 p-4 rounded-md shadow-sm border">
-                            <p className="font-semibold">{meeting.title}</p>
-                            <p className="text-sm text-muted-foreground">{meeting.time}</p>
+                        <div key={index} className="mb-6 p-5 rounded-md shadow-sm border">
+                            <p className="font-semibold text-md">{meeting.title}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{meeting.time}</p>
                         </div>
                     ))}
                     <Button
                         type="button"
                         variant="outline"
                         onClick={handleSendEmailForDate}
-                        className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80"
+                        className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80 mt-4"
                     >
                         Send Email for All Meetings
                     </Button>
@@ -153,3 +153,6 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
 };
 
 export default WeeklyView;
+
+
+    
