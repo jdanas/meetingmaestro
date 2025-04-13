@@ -40,12 +40,12 @@ const formSchema = z.object({
   date: z.date({
     required_error: "A date is required.",
   }),
-  time: z.string({
-    required_error: "A time is required.",
-  }),
   participants: z.string().email({message: "Invalid email format."}).array()
     .transform(emails => emails.filter(email => email !== '')),
   description: z.string(),
+  time: z.string({
+    required_error: "A time is required.",
+  }),
 });
 
 type Meeting = z.infer<typeof formSchema>;
@@ -79,7 +79,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
 
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [isTimeSelected, setIsTimeSelected] = useState(false); // New state
-    const [tempMeeting, setTempMeeting] = useState<Meeting | null>(null);
+  const [tempMeeting, setTempMeeting] = useState<Meeting | null>(null);
 
   useEffect(() => {
     form.setValue("time", selectedTime);
@@ -106,9 +106,9 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
                   const firstMeeting = filteredMeetings[0];
                   form.setValue("title", firstMeeting.title);
                   form.setValue("date", new Date(firstMeeting.date));
-                  form.setValue("time", firstMeeting.time);
                   form.setValue("participants", firstMeeting.participants);
                   form.setValue("description", firstMeeting.description);
+                  form.setValue("time", firstMeeting.time);
               }
           } catch (error) {
               console.error("Failed to parse meetings from local storage", error);
@@ -291,9 +291,70 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
       setTempMeeting(form.getValues());
   };
 
+  const handleSubmit = () => {
+      const values = form.getValues();
+
+      setIsSubmitting(true);
+      try {
+          // Retrieve existing meetings from local storage
+          const storedMeetings = localStorage.getItem('meetings');
+          let meetings: Meeting[] = [];
+
+          if (storedMeetings) {
+              try {
+                  meetings = JSON.parse(storedMeetings) as Meeting[];
+                  // Filter out existing meetings for the same date and time to avoid duplicates
+                  meetings = meetings.filter(meeting =>
+                      !(isSameDay(new Date(meeting.date), new Date(values.date)) && meeting.time === values.time)
+                  );
+              } catch (error) {
+                  console.error("Failed to parse meetings from local storage", error);
+              }
+          }
+
+          // Add the new meeting to the array
+          meetings.push(values);
+
+          // Store the updated array back in local storage
+          localStorage.setItem('meetings', JSON.stringify(meetings));
+
+          toast({
+              title: "Meeting added.",
+              description: "Your meeting has been saved to local storage.",
+          });
+
+          // Update meeting dates
+          const newMeetingDate = new Date(values.date);
+          const isDateAlreadyPresent = meetingDates.some(date => isSameDay(date, newMeetingDate));
+
+          if (!isDateAlreadyPresent) {
+              setMeetingDates([...meetingDates, newMeetingDate]);
+          }
+
+          setMeetingDates(prev => {
+              const newMeetingDate = new Date(values.date);
+              const isDateAlreadyPresent = prev.some(date => isSameDay(date, newMeetingDate));
+              return isDateAlreadyPresent ? prev : [...prev, newMeetingDate];
+          });
+
+          // Update meetings for the selected date
+          const updatedMeetingsForDate = [...meetingsForDate, values];
+          setMeetingsForDate(updatedMeetingsForDate);
+
+          form.reset();
+          setSelectedTime("09:00");
+          setIsTimeSelected(false);
+          setTempMeeting(null); // Clear the temporary meeting
+
+      } finally {
+          setIsSubmitting(false);
+      }
+  };
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form className="space-y-4">
         <FormField
           control={form.control}
           name="title"
@@ -349,33 +410,6 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
               </Popover>
               <FormDescription>
                 Select the date of the meeting.
-              </FormDescription>
-              <FormMessage/>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="time"
-          render={({field}) => (
-            <FormItem>
-              <FormLabel>Time</FormLabel>
-              <FormControl>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((time) => (
-                    <Button
-                      key={time}
-                      variant={field.value === time ? "secondary" : "outline"}
-                      onClick={() => onTimeSelect(time)}
-                      disabled={isTimeSlotDisabled(time)}
-                    >
-                      {time}
-                    </Button>
-                  ))}
-                </div>
-              </FormControl>
-              <FormDescription>
-                Select the time of the meeting.
               </FormDescription>
               <FormMessage/>
             </FormItem>
@@ -443,8 +477,34 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="time"
+          render={({field}) => (
+            <FormItem>
+              <FormLabel>Time</FormLabel>
+              <FormControl>
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map((time) => (
+                    <Button
+                      key={time}
+                      variant={field.value === time ? "secondary" : "outline"}
+                      onClick={() => onTimeSelect(time)}
+                      disabled={isTimeSlotDisabled(time)}
+                    >
+                      {time}
+                    </Button>
+                  ))}
+                </div>
+              </FormControl>
+              <FormDescription>
+                Select the time of the meeting.
+              </FormDescription>
+              <FormMessage/>
+            </FormItem>
+          )}
+        />
         <div className="flex justify-between space-x-4">
-            <Button type="submit" disabled={isSubmitting || !isTimeSelected} className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
         </div>
       </form>
     </Form>
