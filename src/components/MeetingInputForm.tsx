@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -53,6 +53,12 @@ const MeetingInputForm = () => {
     },
   });
 
+  const [availableParticipants, setAvailableParticipants] = useState([
+    'student1@example.com',
+    'student2@example.com',
+    'student3@example.com',
+  ]);
+
   useEffect(() => {
     // Load meetings from local storage on component mount
     const storedMeetings = localStorage.getItem('meetings');
@@ -100,10 +106,33 @@ const MeetingInputForm = () => {
     });
   }
 
-  const addMockParticipant = (studentNumber: number) => {
-    const mockEmail = `student${studentNumber}@example.com`;
-    form.setValue("participants", [...form.getValues("participants"), mockEmail]);
+  const addMockParticipant = (email: string) => {
+    form.setValue("participants", [...form.getValues("participants"), email]);
   };
+
+  const clearParticipants = () => {
+    form.setValue("participants", []);
+  };
+
+  const dragItem = useRef(null);
+
+  const handleDragStart = (e: any, email: string) => {
+    dragItem.current = email;
+    e.dataTransfer.setData("text/plain", email);
+  };
+
+  const handleDragOver = (e: any) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    const droppedEmail = e.dataTransfer.getData("text/plain");
+    if (droppedEmail && !form.getValues("participants").includes(droppedEmail)) {
+      addMockParticipant(droppedEmail);
+    }
+  };
+
 
   return (
     <Form {...form}>
@@ -190,9 +219,9 @@ const MeetingInputForm = () => {
           render={({field}) => (
             <FormItem>
               <FormLabel>Participants</FormLabel>
-              <FormControl>
+              <FormControl onDragOver={handleDragOver} onDrop={handleDrop}>
                 <Input
-                  placeholder="participant1@example.com, participant2@example.com"
+                  placeholder="Drag participants here"
                   {...field}
                   className="border-muted shadow-sm"
                   onChange={(e) =>
@@ -202,13 +231,25 @@ const MeetingInputForm = () => {
                   }
                 />
               </FormControl>
-              <div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(1)}>Add Student 1</Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(2)}>Add Student 2</Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(3)}>Add Student 3</Button>
+              <div className="flex gap-2 mt-2">
+                {availableParticipants.map((email) => (
+                  <Button
+                    key={email}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, email)}
+                  >
+                    {email.split('@')[0]}
+                  </Button>
+                ))}
+                <Button type="button" variant="ghost" size="sm" onClick={clearParticipants}>
+                  Clear
+                </Button>
               </div>
               <FormDescription>
-                Enter the list of participants, separated by commas.
+                Drag participants from available list or enter emails separated by commas.
               </FormDescription>
               <FormMessage/>
             </FormItem>
