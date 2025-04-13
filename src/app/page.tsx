@@ -101,9 +101,10 @@ export default function Home() {
             </SidebarFooter>
         </Sidebar>
         <main className="flex-1 p-6">
-        <Tabs defaultValue="schedule" className="w-[400px]">
+        <Tabs defaultValue="schedule" className="w-full">
           <TabsList>
             <TabsTrigger value="schedule">Schedule Meeting</TabsTrigger>
+            <TabsTrigger value="view">View Meetings</TabsTrigger>
           </TabsList>
           <TabsContent value="schedule">
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -118,8 +119,10 @@ export default function Home() {
                 />
             </div>
           </TabsContent>
+          <TabsContent value="view">
+              <WeeklyView selectedDate={selectedDate} meetingsForDate={meetingsForDate} setMeetingsForDate={setMeetingsForDate}/>
+          </TabsContent>
         </Tabs>
-          <WeeklyView selectedDate={selectedDate} meetingsForDate={meetingsForDate} setMeetingsForDate={setMeetingsForDate}/>
            <Toaster />
         </main>
       </div>
