@@ -28,6 +28,12 @@ export default function Home() {
         setDate(date);
     };
 
+  React.useEffect(() => {
+    // Clear local storage on component mount
+    localStorage.clear();
+    setMeetingDates([]);
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex h-screen">
