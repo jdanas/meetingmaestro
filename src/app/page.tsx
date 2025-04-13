@@ -11,6 +11,8 @@ import {CalendarIcon} from "lucide-react";
 import * as React from "react";
 import {format, isSameDay} from "date-fns";
 import { Toaster } from "@/components/ui/toaster"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import SuggestMeetingTimesForm from '@/components/SuggestMeetingTimesForm';
 
 export default function Home() {
 
@@ -95,15 +97,26 @@ export default function Home() {
             </SidebarFooter>
         </Sidebar>
         <main className="flex-1 p-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <MeetingInputForm setMeetingDates={setMeetingDates} meetingDates={meetingDates}/>
-          </div>
-          <div className="mt-6">
-            <WeeklyView selectedDate={date}/>
-          </div>
+        <Tabs defaultValue="schedule" className="w-[400px]">
+          <TabsList>
+            <TabsTrigger value="schedule">Schedule Meeting</TabsTrigger>
+            <TabsTrigger value="suggest">Suggest Times</TabsTrigger>
+          </TabsList>
+          <TabsContent value="schedule">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <MeetingInputForm setMeetingDates={setMeetingDates} meetingDates={meetingDates} selectedDate={date}/>
+            </div>
+          </TabsContent>
+          <TabsContent value="suggest">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <SuggestMeetingTimesForm />
+            </div>
+          </TabsContent>
+        </Tabs>
            <Toaster />
         </main>
       </div>
     </SidebarProvider>
   );
 }
+
