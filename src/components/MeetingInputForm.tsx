@@ -30,8 +30,8 @@ const formSchema = z.object({
   date: z.date({
     required_error: "A date is required.",
   }),
-  time: z.string().regex(/^([0-9]{2}):([0-9]{2})$/, {
-    message: "Invalid time format. Use HH:MM.",
+  time: z.string({
+    required_error: "A time is required.",
   }),
   participants: z.string().email({message: "Invalid email format."}).array()
     .transform(emails => emails.filter(email => email !== '')),
@@ -47,7 +47,7 @@ const MeetingInputForm = () => {
     defaultValues: {
       title: "",
       date: new Date(),
-      time: "10:00",
+      time: "09:00", // Default time
       participants: [],
       description: "",
     },
@@ -133,6 +133,12 @@ const MeetingInputForm = () => {
     }
   };
 
+    const timeSlots = Array.from({length: 9}, (_, i) => {
+      const hour = i + 9;
+      const time = hour.toString().padStart(2, '0') + ":00";
+      return time;
+    });
+
 
   return (
     <Form {...form}>
@@ -204,7 +210,17 @@ const MeetingInputForm = () => {
             <FormItem>
               <FormLabel>Time</FormLabel>
               <FormControl>
-                <Input placeholder="HH:MM" {...field} className="border-muted shadow-sm"/>
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map((time) => (
+                    <Button
+                      key={time}
+                      variant={field.value === time ? "secondary" : "outline"}
+                      onClick={() => field.onChange(time)}
+                    >
+                      {time}
+                    </Button>
+                  ))}
+                </div>
               </FormControl>
               <FormDescription>
                 Select the time of the meeting.
