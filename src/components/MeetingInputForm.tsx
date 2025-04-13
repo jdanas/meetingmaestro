@@ -339,15 +339,17 @@ const MeetingInputForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => form.handleSubmit(handleSendEmail)(form.getValues())}
-            className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80"
-          >
-            Send Email
-          </Button>
+        <div className="flex space-x-4">
+            <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.handleSubmit(handleSendEmail)(form.getValues())}
+              className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80"
+            >
+              Send Email
+            </Button>
+        </div>
       </form>
     </Form>
   );
