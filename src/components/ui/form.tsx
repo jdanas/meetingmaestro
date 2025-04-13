@@ -105,9 +105,21 @@ FormLabel.displayName = "FormLabel"
 
 const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof Slot> & {
+    children: React.ReactNode
+  }
+>(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+
+  // Ensure that only one child is passed to the Slot component
+  const validChildren = React.Children.toArray(children).filter(Boolean)
+
+  let content = null;
+  if (validChildren.length === 1) {
+    content = validChildren[0];
+  } else if (validChildren.length > 1) {
+    content = <React.Fragment>{children}</React.Fragment>;
+  }
 
   return (
     <Slot
@@ -120,7 +132,9 @@ const FormControl = React.forwardRef<
       }
       aria-invalid={!!error}
       {...props}
-    />
+    >
+      {content}
+    </Slot>
   )
 })
 FormControl.displayName = "FormControl"

@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -104,9 +105,30 @@ const MeetingInputForm = () => {
         });
     }
 
+    const [studentSuggestions, setStudentSuggestions] = useState<string[]>([]);
+
+    // Load student suggestions from local storage or a predefined list
+    useEffect(() => {
+        const storedStudents = localStorage.getItem('studentSuggestions');
+        if (storedStudents) {
+            try {
+                const parsedStudents = JSON.parse(storedStudents) as string[];
+                setStudentSuggestions(parsedStudents);
+            } catch (error) {
+                console.error("Failed to parse student suggestions from local storage", error);
+                // Fallback to a predefined list if parsing fails
+                setStudentSuggestions(['student1@example.com', 'student2@example.com', 'student3@example.com']);
+            }
+        } else {
+            // Initialize with a predefined list if nothing is stored
+            setStudentSuggestions(['student1@example.com', 'student2@example.com', 'student3@example.com']);
+        }
+    }, []);
+
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="title"
@@ -114,7 +136,7 @@ const MeetingInputForm = () => {
                         <FormItem>
                             <FormLabel>Title</FormLabel>
                             <FormControl>
-                                <Input placeholder="Meeting Title" {...field} />
+                                <Input placeholder="Meeting Title" {...field} className="border-muted shadow-sm"/>
                             </FormControl>
                             <FormDescription>
                                 Enter the title of the meeting.
@@ -135,7 +157,7 @@ const MeetingInputForm = () => {
                                         <Button
                                             variant={"outline"}
                                             className={cn(
-                                                "w-[240px] justify-start text-left font-normal",
+                                                "w-[240px] justify-start text-left font-normal border-muted shadow-sm",
                                                 !field.value && "text-muted-foreground"
                                             )}
                                         >
@@ -174,7 +196,7 @@ const MeetingInputForm = () => {
                         <FormItem>
                             <FormLabel>Time</FormLabel>
                             <FormControl>
-                                <Input placeholder="HH:MM" {...field} />
+                                <Input placeholder="HH:MM" {...field} className="border-muted shadow-sm"/>
                             </FormControl>
                             <FormDescription>
                                 Select the time of the meeting.
@@ -193,6 +215,7 @@ const MeetingInputForm = () => {
                                 <Input
                                     placeholder="attendee1@example.com, attendee2@example.com"
                                     {...field}
+                                    className="border-muted shadow-sm"
                                     onChange={(e) =>
                                         field.onChange(
                                           e.target.value.split(',').map(s => s.trim())
@@ -217,15 +240,29 @@ const MeetingInputForm = () => {
                                 <Input
                                     placeholder="student1@example.com, student2@example.com"
                                     {...field}
-                                     onChange={(e) =>
+                                    className="border-muted shadow-sm"
+                                     onChange={(e) => {
                                         field.onChange(
                                           e.target.value.split(',').map(s => s.trim())
-                                        )
-                                    }
+                                        );
+                                        // Basic Autocomplete Suggestion (replace with a more robust solution if needed)
+                                        const value = e.target.value;
+                                        if (value.includes('@') && !studentSuggestions.includes(value)) {
+                                            // This is a simplified approach. A real implementation might involve an API.
+                                            localStorage.setItem('studentSuggestions', JSON.stringify([...new Set([...studentSuggestions, value])]));
+                                            setStudentSuggestions(prev => [...new Set([...prev, value])]); // Update state
+                                        }
+                                    }}
+                                    list="student-emails"
                                 />
+                                <datalist id="student-emails">
+                                    {studentSuggestions.map((email, index) => (
+                                        <option key={index} value={email} />
+                                    ))}
+                                </datalist>
                             </FormControl>
                             <FormDescription>
-                                Enter the list of students required to attend, separated by commas.
+                                Enter the list of students required to attend, separated by commas. Autocomplete suggestions are available.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -240,7 +277,7 @@ const MeetingInputForm = () => {
                             <FormControl>
                                 <Textarea
                                     placeholder="Enter a description for the meeting."
-                                    className="resize-none"
+                                    className="resize-none border-muted shadow-sm"
                                     {...field}
                                 />
                             </FormControl>
@@ -251,7 +288,7 @@ const MeetingInputForm = () => {
                         </FormItem>
                     )}
                 />
-                <Button type="submit">Submit</Button>
+                <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
             </form>
         </Form>
     );

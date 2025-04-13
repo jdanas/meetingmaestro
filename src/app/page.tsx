@@ -1,3 +1,4 @@
+
 'use client'
 
 import MeetingInputForm from '@/components/MeetingInputForm';
@@ -59,13 +60,16 @@ export default function Home() {
               </SidebarTrigger>
             </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 p-4">
-          <MeetingInputForm />
-          <WeeklyView selectedDate={date}/>
+        <main className="flex-1 p-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <MeetingInputForm />
+          </div>
+          <div className="mt-6">
+            <WeeklyView selectedDate={date}/>
+          </div>
            <Toaster />
         </main>
       </div>
     </SidebarProvider>
   );
 }
-
