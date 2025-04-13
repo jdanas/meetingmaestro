@@ -17,6 +17,7 @@ export default function Home() {
     const [selectedDate, setDate] = React.useState<Date | undefined>(new Date());
     const [meetingDates, setMeetingDates] = React.useState<Date[]>([]);
     const [formKey, setFormKey] = React.useState(Date.now());
+    const [meetingsForDate, setMeetingsForDate] = React.useState<any[]>([]);
 
     const handleMeetingDatesChange = (newMeetingDates: Date[]) => {
         setMeetingDates(newMeetingDates);
@@ -112,15 +113,16 @@ export default function Home() {
                     meetingDates={meetingDates}
                     selectedDate={selectedDate}
                     setDate={handleDateChange}
+                    setMeetingsForDate={setMeetingsForDate}
+                    meetingsForDate={meetingsForDate}
                 />
             </div>
           </TabsContent>
         </Tabs>
-          <WeeklyView selectedDate={selectedDate} />
+          <WeeklyView selectedDate={selectedDate} meetingsForDate={meetingsForDate} setMeetingsForDate={setMeetingsForDate}/>
            <Toaster />
         </main>
       </div>
     </SidebarProvider>
   );
 }
-

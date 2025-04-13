@@ -29,6 +29,8 @@ interface MeetingInputFormProps {
     meetingDates: Date[];
     selectedDate: Date | undefined;
     setDate: (date: Date | undefined) => void;
+    setMeetingsForDate: (meetings: Meeting[]) => void;
+    meetingsForDate: Meeting[];
 }
 
 const formSchema = z.object({
@@ -48,7 +50,14 @@ const formSchema = z.object({
 
 type Meeting = z.infer<typeof formSchema>;
 
-const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, meetingDates, selectedDate, setDate }) => {
+const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
+  setMeetingDates,
+  meetingDates,
+  selectedDate,
+  setDate,
+  setMeetingsForDate,
+  meetingsForDate
+}) => {
   const {toast} = useToast();
   const form = useForm<Meeting>({
     resolver: zodResolver(formSchema),
@@ -77,28 +86,35 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
     form.setValue("date", selectedDate || new Date());
   }, [selectedDate, form.setValue]);
 
+    useEffect(() => {
+        // Load meetings from local storage on component mount
+        const storedMeetings = localStorage.getItem('meetings');
+        if (storedMeetings) {
+            try {
+                const parsedMeetings = JSON.parse(storedMeetings) as Meeting[];
+                // Filter meetings for the selected date
+                const filteredMeetings = parsedMeetings.filter(meeting =>
+                    selectedDate && isSameDay(new Date(meeting.date), selectedDate)
+                );
+                setMeetingsForDate(filteredMeetings);
 
-  useEffect(() => {
-    // Load meetings from local storage on component mount
-    const storedMeetings = localStorage.getItem('meetings');
-    if (storedMeetings) {
-      try {
-        const parsedMeetings = JSON.parse(storedMeetings) as Meeting[];
-        // You might want to set the form values to the first meeting in the array,
-        // or handle multiple meetings in a different way.
-        if (parsedMeetings.length > 0) {
-          const firstMeeting = parsedMeetings[0];
-          form.setValue("title", firstMeeting.title);
-          form.setValue("date", firstMeeting.date);
-          form.setValue("time", firstMeeting.time);
-          form.setValue("participants", firstMeeting.participants);
-          form.setValue("description", firstMeeting.description);
+                if (filteredMeetings.length > 0) {
+                    // Set form values to the first meeting in the array
+                    const firstMeeting = filteredMeetings[0];
+                    form.setValue("title", firstMeeting.title);
+                    form.setValue("date", firstMeeting.date);
+                    form.setValue("time", firstMeeting.time);
+                    form.setValue("participants", firstMeeting.participants);
+                    form.setValue("description", firstMeeting.description);
+                }
+            } catch (error) {
+                console.error("Failed to parse meetings from local storage", error);
+            }
+        } else {
+            setMeetingsForDate([]);
         }
-      } catch (error) {
-        console.error("Failed to parse meetings from local storage", error);
-      }
-    }
-  }, [form]);
+    }, [form, selectedDate, setMeetingsForDate]);
+
 
   const handleSendEmail = async (values: Meeting) => {
     const emailList = values.participants;
@@ -140,6 +156,30 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
     }
   };
 
+    const handleSendEmailForDate = async () => {
+        if (!selectedDate) {
+            toast({
+                title: "No date selected",
+                description: "Please select a date to send emails for the meetings on that day.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!meetingsForDate || meetingsForDate.length === 0) {
+            toast({
+                title: "No meetings scheduled",
+                description: "No meetings scheduled for the selected date.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        for (const meeting of meetingsForDate) {
+            await handleSendEmail(meeting);
+        }
+    };
+
   function onSubmit(values: Meeting) {
       // Retrieve existing meetings from local storage
       const storedMeetings = localStorage.getItem('meetings');
@@ -148,6 +188,10 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
       if (storedMeetings) {
           try {
               meetings = JSON.parse(storedMeetings) as Meeting[];
+              // Filter out existing meetings for the same date to avoid duplicates
+              meetings = meetings.filter(meeting =>
+                  !isSameDay(new Date(meeting.date), new Date(values.date))
+              );
           } catch (error) {
               console.error("Failed to parse meetings from local storage", error);
           }
@@ -177,6 +221,13 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
           const isDateAlreadyPresent = prev.some(date => isSameDay(date, newMeetingDate));
           return isDateAlreadyPresent ? prev : [...prev, newMeetingDate];
         });
+
+        // Update meetings for the selected date
+        const updatedMeetingsForDate = [...meetingsForDate, values];
+        setMeetingsForDate(updatedMeetingsForDate);
+
+        form.reset();
+        setSelectedTime("09:00")
   }
 
   const addMockParticipant = (email: string) => {
@@ -373,14 +424,6 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
         />
         <div className="flex justify-between space-x-4">
             <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => form.handleSubmit(handleSendEmail)(form.getValues())}
-              className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80"
-            >
-              Send Email
-            </Button>
         </div>
       </form>
     </Form>
