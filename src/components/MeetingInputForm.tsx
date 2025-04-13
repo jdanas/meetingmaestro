@@ -20,9 +20,14 @@ import {Calendar} from "@/components/ui/calendar";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {cn} from "@/lib/utils";
 import {CalendarIcon} from "lucide-react";
-import {format} from "date-fns";
+import {format, isSameDay} from "date-fns";
 import {useToast} from "@/hooks/use-toast";
 import {sendEmail} from "@/services/email";
+
+interface MeetingInputFormProps {
+    setMeetingDates: React.Dispatch<React.SetStateAction<Date[]>>;
+    meetingDates: Date[];
+}
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -41,7 +46,7 @@ const formSchema = z.object({
 
 type Meeting = z.infer<typeof formSchema>;
 
-const MeetingInputForm = () => {
+const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, meetingDates }) => {
   const {toast} = useToast();
   const form = useForm<Meeting>({
     resolver: zodResolver(formSchema),
@@ -130,28 +135,36 @@ const MeetingInputForm = () => {
   };
 
   function onSubmit(values: Meeting) {
-    // Retrieve existing meetings from local storage
-    const storedMeetings = localStorage.getItem('meetings');
-    let meetings: Meeting[] = [];
+      // Retrieve existing meetings from local storage
+      const storedMeetings = localStorage.getItem('meetings');
+      let meetings: Meeting[] = [];
 
-    if (storedMeetings) {
-      try {
-        meetings = JSON.parse(storedMeetings) as Meeting[];
-      } catch (error) {
-        console.error("Failed to parse meetings from local storage", error);
+      if (storedMeetings) {
+          try {
+              meetings = JSON.parse(storedMeetings) as Meeting[];
+          } catch (error) {
+              console.error("Failed to parse meetings from local storage", error);
+          }
       }
-    }
 
-    // Add the new meeting to the array
-    meetings.push(values);
+      // Add the new meeting to the array
+      meetings.push(values);
 
-    // Store the updated array back in local storage
-    localStorage.setItem('meetings', JSON.stringify(meetings));
+      // Store the updated array back in local storage
+      localStorage.setItem('meetings', JSON.stringify(meetings));
 
-    toast({
-      title: "Meeting added.",
-      description: "Your meeting has been saved to local storage.",
-    });
+      toast({
+          title: "Meeting added.",
+          description: "Your meeting has been saved to local storage.",
+      });
+
+       // Update meeting dates
+        const newMeetingDate = new Date(values.date);
+        const isDateAlreadyPresent = meetingDates.some(date => isSameDay(date, newMeetingDate));
+
+        if (!isDateAlreadyPresent) {
+            setMeetingDates([...meetingDates, newMeetingDate]);
+        }
   }
 
   const addMockParticipant = (email: string) => {
@@ -339,7 +352,7 @@ const MeetingInputForm = () => {
             </FormItem>
           )}
         />
-        <div className="flex space-x-4">
+        <div className="flex justify-between space-x-4">
             <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
             <Button
               type="button"
