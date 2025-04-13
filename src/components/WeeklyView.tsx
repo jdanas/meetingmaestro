@@ -133,6 +133,9 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
                         <div key={index} className="mb-6 p-5 rounded-md shadow-sm border">
                             <p className="font-semibold text-md">{meeting.title}</p>
                             <p className="text-sm text-muted-foreground mt-1">{meeting.time}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Attendees: {meeting.participants.map(email => email.split('@')[0]).join(', ')}
+                            </p>
                         </div>
                     ))}
                     <Button
@@ -153,6 +156,3 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
 };
 
 export default WeeklyView;
-
-
-    
