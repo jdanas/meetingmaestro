@@ -100,8 +100,8 @@ const MeetingInputForm = () => {
     });
   }
 
-  const addMockParticipant = () => {
-    const mockEmail = `participant${form.getValues("participants").length + 1}@example.com`;
+  const addMockParticipant = (studentNumber: number) => {
+    const mockEmail = `student${studentNumber}@example.com`;
     form.setValue("participants", [...form.getValues("participants"), mockEmail]);
   };
 
@@ -202,7 +202,11 @@ const MeetingInputForm = () => {
                   }
                 />
               </FormControl>
-              <Button type="button" variant="secondary" size="sm" onClick={addMockParticipant}>Add Mock Participant</Button>
+              <div>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(1)}>Add Student 1</Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(2)}>Add Student 2</Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addMockParticipant(3)}>Add Student 3</Button>
+              </div>
               <FormDescription>
                 Enter the list of participants, separated by commas.
               </FormDescription>
