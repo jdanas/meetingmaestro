@@ -12,7 +12,6 @@ import * as React from "react";
 import {format, isSameDay} from "date-fns";
 import { Toaster } from "@/components/ui/toaster"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import SuggestMeetingTimesForm from '@/components/SuggestMeetingTimesForm';
 
 export default function Home() {
     // Move state to parent component to properly update the sidebar
@@ -100,7 +99,6 @@ export default function Home() {
         <Tabs defaultValue="schedule" className="w-[400px]">
           <TabsList>
             <TabsTrigger value="schedule">Schedule Meeting</TabsTrigger>
-            <TabsTrigger value="suggest">Suggest Times</TabsTrigger>
           </TabsList>
           <TabsContent value="schedule">
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -113,11 +111,6 @@ export default function Home() {
                 />
             </div>
           </TabsContent>
-          <TabsContent value="suggest">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <SuggestMeetingTimesForm />
-            </div>
-          </TabsContent>
         </Tabs>
            <Toaster />
         </main>
@@ -125,3 +118,4 @@ export default function Home() {
     </SidebarProvider>
   );
 }
+
