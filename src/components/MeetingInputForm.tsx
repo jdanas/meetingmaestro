@@ -59,6 +59,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
   meetingsForDate
 }) => {
   const {toast} = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<Meeting>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -102,7 +103,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
                     // Set form values to the first meeting in the array
                     const firstMeeting = filteredMeetings[0];
                     form.setValue("title", firstMeeting.title);
-                    form.setValue("date", firstMeeting.date);
+                    form.setValue("date", new Date(firstMeeting.date));
                     form.setValue("time", firstMeeting.time);
                     form.setValue("participants", firstMeeting.participants);
                     form.setValue("description", firstMeeting.description);
@@ -180,54 +181,59 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
         }
     };
 
-  function onSubmit(values: Meeting) {
-      // Retrieve existing meetings from local storage
-      const storedMeetings = localStorage.getItem('meetings');
-      let meetings: Meeting[] = [];
+  async function onSubmit(values: Meeting) {
+      setIsSubmitting(true);
+      try {
+          // Retrieve existing meetings from local storage
+          const storedMeetings = localStorage.getItem('meetings');
+          let meetings: Meeting[] = [];
 
-      if (storedMeetings) {
-          try {
-              meetings = JSON.parse(storedMeetings) as Meeting[];
-              // Filter out existing meetings for the same date and time to avoid duplicates
-              meetings = meetings.filter(meeting =>
-                  !(isSameDay(new Date(meeting.date), new Date(values.date)) && meeting.time === values.time)
-              );
-          } catch (error) {
-              console.error("Failed to parse meetings from local storage", error);
+          if (storedMeetings) {
+              try {
+                  meetings = JSON.parse(storedMeetings) as Meeting[];
+                  // Filter out existing meetings for the same date and time to avoid duplicates
+                  meetings = meetings.filter(meeting =>
+                      !(isSameDay(new Date(meeting.date), new Date(values.date)) && meeting.time === values.time)
+                  );
+              } catch (error) {
+                  console.error("Failed to parse meetings from local storage", error);
+              }
           }
+
+          // Add the new meeting to the array
+          meetings.push(values);
+
+          // Store the updated array back in local storage
+          localStorage.setItem('meetings', JSON.stringify(meetings));
+
+          toast({
+              title: "Meeting added.",
+              description: "Your meeting has been saved to local storage.",
+          });
+
+           // Update meeting dates
+            const newMeetingDate = new Date(values.date);
+            const isDateAlreadyPresent = meetingDates.some(date => isSameDay(date, newMeetingDate));
+
+            if (!isDateAlreadyPresent) {
+                setMeetingDates([...meetingDates, newMeetingDate]);
+            }
+
+            setMeetingDates(prev => {
+              const newMeetingDate = new Date(values.date);
+              const isDateAlreadyPresent = prev.some(date => isSameDay(date, newMeetingDate));
+              return isDateAlreadyPresent ? prev : [...prev, newMeetingDate];
+            });
+
+            // Update meetings for the selected date
+            const updatedMeetingsForDate = [...meetingsForDate, values];
+            setMeetingsForDate(updatedMeetingsForDate);
+
+            form.reset();
+            setSelectedTime("09:00")
+      } finally {
+          setIsSubmitting(false);
       }
-
-      // Add the new meeting to the array
-      meetings.push(values);
-
-      // Store the updated array back in local storage
-      localStorage.setItem('meetings', JSON.stringify(meetings));
-
-      toast({
-          title: "Meeting added.",
-          description: "Your meeting has been saved to local storage.",
-      });
-
-       // Update meeting dates
-        const newMeetingDate = new Date(values.date);
-        const isDateAlreadyPresent = meetingDates.some(date => isSameDay(date, newMeetingDate));
-
-        if (!isDateAlreadyPresent) {
-            setMeetingDates([...meetingDates, newMeetingDate]);
-        }
-
-        setMeetingDates(prev => {
-          const newMeetingDate = new Date(values.date);
-          const isDateAlreadyPresent = prev.some(date => isSameDay(date, newMeetingDate));
-          return isDateAlreadyPresent ? prev : [...prev, newMeetingDate];
-        });
-
-        // Update meetings for the selected date
-        const updatedMeetingsForDate = [...meetingsForDate, values];
-        setMeetingsForDate(updatedMeetingsForDate);
-
-        form.reset();
-        setSelectedTime("09:00")
   }
 
   const addMockParticipant = (email: string) => {
@@ -430,7 +436,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
           )}
         />
         <div className="flex justify-between space-x-4">
-            <Button type="submit" className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
+            <Button type="submit" disabled={isSubmitting} className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/80">Submit</Button>
         </div>
       </form>
     </Form>
