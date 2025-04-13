@@ -27,6 +27,8 @@ import {sendEmail} from "@/services/email";
 interface MeetingInputFormProps {
     setMeetingDates: React.Dispatch<React.SetStateAction<Date[]>>;
     meetingDates: Date[];
+    selectedDate: Date | undefined;
+    setDate: (date: Date | undefined) => void;
 }
 
 const formSchema = z.object({
@@ -46,13 +48,13 @@ const formSchema = z.object({
 
 type Meeting = z.infer<typeof formSchema>;
 
-const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, meetingDates }) => {
+const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, meetingDates, selectedDate, setDate }) => {
   const {toast} = useToast();
   const form = useForm<Meeting>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      date: new Date(),
+      date: selectedDate || new Date(),
       time: "09:00", // Default time
       participants: [],
       description: "",
@@ -70,6 +72,10 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
   useEffect(() => {
     form.setValue("time", selectedTime);
   }, [selectedTime, form.setValue]);
+
+  useEffect(() => {
+    form.setValue("date", selectedDate || new Date());
+  }, [selectedDate, form.setValue]);
 
 
   useEffect(() => {
@@ -165,6 +171,12 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
         if (!isDateAlreadyPresent) {
             setMeetingDates([...meetingDates, newMeetingDate]);
         }
+
+        setMeetingDates(prev => {
+          const newMeetingDate = new Date(values.date);
+          const isDateAlreadyPresent = prev.some(date => isSameDay(date, newMeetingDate));
+          return isDateAlreadyPresent ? prev : [...prev, newMeetingDate];
+        });
   }
 
   const addMockParticipant = (email: string) => {
@@ -200,6 +212,10 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
       return time;
     });
 
+    const handleDateSelect = (date: Date | undefined) => {
+      setDate(date);
+      form.setValue("date", date || new Date()); // Also update the form's date value
+    };
 
   return (
     <Form {...form}>
@@ -249,7 +265,10 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({ setMeetingDates, me
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      handleDateSelect(date);
+                      field.onChange(date);
+                    }}
                     disabled={(date) =>
                       date < new Date()
                     }

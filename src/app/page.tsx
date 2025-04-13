@@ -15,28 +15,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SuggestMeetingTimesForm from '@/components/SuggestMeetingTimesForm';
 
 export default function Home() {
-
-    const [date, setDate] = React.useState<Date | undefined>(new Date());
+    // Move state to parent component to properly update the sidebar
+    const [selectedDate, setDate] = React.useState<Date | undefined>(new Date());
     const [meetingDates, setMeetingDates] = React.useState<Date[]>([]);
+    const [formKey, setFormKey] = React.useState(Date.now());
 
-    React.useEffect(() => {
-        const storedMeetings = localStorage.getItem('meetings');
-        if (storedMeetings) {
-            try {
-                const parsedMeetings = JSON.parse(storedMeetings) as any[];
-                const dates = parsedMeetings.map(meeting => new Date(meeting.date));
-                // Remove duplicate dates
-                const uniqueDates = dates.filter((date, index, self) =>
-                    index === self.findIndex((t) => (
-                        isSameDay(date, t)
-                    ))
-                );
-                setMeetingDates(uniqueDates);
-            } catch (error) {
-                console.error("Failed to parse meetings from local storage", error);
-            }
-        }
-    }, []);
+    // Callbacks for the forms to update the parent component
+    const handleMeetingDatesChange = (newMeetingDates: Date[]) => {
+        setMeetingDates(newMeetingDates);
+    };
+
+    const handleDateChange = (date: Date | undefined) => {
+        setDate(date);
+    };
 
   return (
     <SidebarProvider>
@@ -47,21 +38,27 @@ export default function Home() {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarMenu>
-                    {meetingDates.map((meetingDate) => (
-                        <SidebarMenuItem key={meetingDate.toISOString()}>
-                            <Button
-                                variant={"ghost"}
-                                className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
-                                    date && isSameDay(date, meetingDate) ? "bg-secondary" : "",
-                                )}
-                                onClick={() => setDate(meetingDate)}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4"/>
-                                {format(meetingDate, "PPP")}
-                            </Button>
-                        </SidebarMenuItem>
-                    ))}
+                  <SidebarMenuItem>
+                    <p className="px-4 py-2 font-medium text-sm">Meeting Dates</p>
+                  </SidebarMenuItem>
+                  {meetingDates.map((meetingDate) => (
+                    <SidebarMenuItem key={meetingDate.toISOString()}>
+                      <Button
+                        variant={"ghost"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          selectedDate && isSameDay(selectedDate, meetingDate) ? "bg-secondary" : "",
+                        )}
+                        onClick={() => setDate(meetingDate)}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4"/>
+                        {format(meetingDate, "PPP")}
+                      </Button>
+                    </SidebarMenuItem>
+                  ))}
+                  <SidebarMenuItem>
+                    <p className="px-4 py-2 font-medium text-sm">Pick a date</p>
+                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -69,11 +66,11 @@ export default function Home() {
                             variant={"ghost"}
                             className={cn(
                                 "w-[240px] justify-start text-left font-normal",
-                                !date && "text-muted-foreground",
+                                !selectedDate && "text-muted-foreground",
                             )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4"/>
-                          {date ? format(date, "PPP") : (
+                          {selectedDate ? format(selectedDate, "PPP") : (
                               <span>Pick a date</span>
                           )}
                         </Button>
@@ -81,8 +78,11 @@ export default function Home() {
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                             mode="single"
-                            selected={date}
-                            onSelect={setDate}
+                            selected={selectedDate}
+                            onSelect={(date) => {
+                              setDate(date);
+                              setFormKey(Date.now()); // Update form key to rerender the form when date changes
+                            }}
                             initialFocus
                         />
                       </PopoverContent>
@@ -104,7 +104,13 @@ export default function Home() {
           </TabsList>
           <TabsContent value="schedule">
             <div className="bg-white rounded-lg shadow-md p-6">
-              <MeetingInputForm setMeetingDates={setMeetingDates} meetingDates={meetingDates} selectedDate={date}/>
+                <MeetingInputForm
+                    key={formKey} // Force a re-render when the date changes
+                    setMeetingDates={handleMeetingDatesChange}
+                    meetingDates={meetingDates}
+                    selectedDate={selectedDate}
+                    setDate={handleDateChange}
+                />
             </div>
           </TabsContent>
           <TabsContent value="suggest">
@@ -119,4 +125,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
