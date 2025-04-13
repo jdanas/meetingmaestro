@@ -1,3 +1,5 @@
+'use client';
+
 import React, {useEffect, useState, useRef} from 'react';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -266,6 +268,10 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
       form.setValue("date", date || new Date()); // Also update the form's date value
     };
 
+    const isTimeSlotDisabled = (time: string) => {
+        return meetingsForDate.some(meeting => meeting.time === time);
+    };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -342,6 +348,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
                       key={time}
                       variant={field.value === time ? "secondary" : "outline"}
                       onClick={() => setSelectedTime(time)}
+                      disabled={isTimeSlotDisabled(time)}
                     >
                       {time}
                     </Button>
