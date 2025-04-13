@@ -1,7 +1,7 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay} from 'date-fns';
+import {format, isSameDay, parse} from 'date-fns';
 
 interface WeeklyViewProps {
   selectedDate: Date | undefined;
@@ -28,6 +28,7 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({selectedDate}) => {
         const meetingsWithDates = parsedMeetings.map(meeting => ({
           ...meeting,
           date: new Date(meeting.date), // Assuming meeting.date is an ISO string
+          time: meeting.time,
         }));
         setMeetings(meetingsWithDates);
       } catch (error) {
@@ -40,45 +41,33 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({selectedDate}) => {
     return <p>No date selected.</p>;
   }
 
-  const start = startOfWeek(selectedDate, {weekStartsOn: 1}); // Monday
-  const end = endOfWeek(selectedDate, {weekStartsOn: 1}); // Sunday
-  const days = eachDayOfInterval({start, end});
+  const selectedMeetings = meetings.filter(meeting => isSameDay(new Date(meeting.date), selectedDate));
+
+  // Sort meetings by time
+  selectedMeetings.sort((a, b) => {
+    const timeA = parse(a.time, 'HH:mm', new Date());
+    const timeB = parse(b.time, 'HH:mm', new Date());
+    return timeA.getTime() - timeB.getTime();
+  });
 
   return (
     <div>
-      <h2>Weekly View</h2>
-      <table className="w-full border-collapse border border-gray-400">
-        <thead>
-        <tr>
-          {days.map(day => (
-            <th key={day.toISOString()} className="border border-gray-400 p-2">
-              {format(day, 'EEE dd/MM')}
-            </th>
+      <h2>Meetings for {format(selectedDate, 'PPP')}</h2>
+      {selectedMeetings.length > 0 ? (
+        <div>
+          {selectedMeetings.map((meeting, index) => (
+            <div key={index} className="mb-4 p-4 rounded-md shadow-sm border">
+              <p className="font-semibold">{meeting.title}</p>
+              <p className="text-sm text-muted-foreground">{meeting.time}</p>
+            </div>
           ))}
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          {days.map(day => (
-            <td key={day.toISOString()} className="border border-gray-400 p-2">
-              {/* Meeting content for each day will go here */}
-              {meetings.filter(meeting => isSameDay(new Date(meeting.date), day)).map((meeting, index) => (
-                <div key={index}>
-                  <p>{meeting.title}</p>
-                  <p>{meeting.time}</p>
-                  {/* Display other meeting details as needed */}
-                </div>
-              ))}
-              {meetings.filter(meeting => isSameDay(new Date(meeting.date), day)).length === 0 && (
-                <p>No meetings</p>
-              )}
-            </td>
-          ))}
-        </tr>
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <p>No meetings scheduled for this day.</p>
+      )}
     </div>
   );
 };
 
 export default WeeklyView;
+
