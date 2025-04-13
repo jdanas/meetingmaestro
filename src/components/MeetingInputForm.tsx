@@ -188,7 +188,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
       if (storedMeetings) {
           try {
               meetings = JSON.parse(storedMeetings) as Meeting[];
-              // Filter out existing meetings for the same date to avoid duplicates
+              // Filter out existing meetings for the same date and time to avoid duplicates
               meetings = meetings.filter(meeting =>
                   !(isSameDay(new Date(meeting.date), new Date(values.date)) && meeting.time === values.time)
               );
@@ -272,6 +272,11 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
         return meetingsForDate.some(meeting => meeting.time === time);
     };
 
+    const onTimeSelect = (time: string) => {
+        setSelectedTime(time);
+        form.setValue("time", time);
+    };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -347,7 +352,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
                     <Button
                       key={time}
                       variant={field.value === time ? "secondary" : "outline"}
-                      onClick={() => setSelectedTime(time)}
+                      onClick={() => onTimeSelect(time)}
                       disabled={isTimeSlotDisabled(time)}
                     >
                       {time}
