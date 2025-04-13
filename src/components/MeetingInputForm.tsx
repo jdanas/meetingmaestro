@@ -18,7 +18,7 @@ import {Calendar} from "@/components/ui/calendar";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {cn} from "@/lib/utils";
 import {CalendarIcon} from "lucide-react";
-import {format, isSameDay} from "date-fns";
+import {format, isSameDay, parse} from "date-fns";
 import {useToast} from "@/hooks/use-toast";
 import {sendEmail} from "@/services/email";
 
@@ -188,7 +188,7 @@ const MeetingInputForm: React.FC<MeetingInputFormProps> = ({
               meetings = JSON.parse(storedMeetings) as Meeting[];
               // Filter out existing meetings for the same date to avoid duplicates
               meetings = meetings.filter(meeting =>
-                  !isSameDay(new Date(meeting.date), new Date(values.date))
+                  !(isSameDay(new Date(meeting.date), new Date(values.date)) && meeting.time === values.time)
               );
           } catch (error) {
               console.error("Failed to parse meetings from local storage", error);
