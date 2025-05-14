@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, {useEffect, useState} from 'react';
 import {format, isSameDay, parse} from 'date-fns';
 import {Button} from "@/components/ui/button";
 import {useToast} from "@/hooks/use-toast";
-import {sendEmail} from "@/services/email";
+import { Copy } from 'lucide-react';
 
 interface WeeklyViewProps {
   selectedDate: Date | undefined;
@@ -59,69 +60,51 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
     return timeA.getTime() - timeB.getTime();
   });
 
-    const handleSendEmailForDate = async () => {
-        if (!selectedDate) {
-            toast({
-                title: "No date selected",
-                description: "Please select a date to send emails for the meetings on that day.",
-                variant: "destructive",
-            });
-            return;
-        }
+  const handleCopyAllMeetings = async () => {
+    if (!selectedDate) {
+      toast({
+        title: "No date selected",
+        description: "Please select a date to copy meetings.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        if (!meetingsForDate || meetingsForDate.length === 0) {
-            toast({
-                title: "No meetings scheduled",
-                description: "No meetings scheduled for the selected date.",
-                variant: "destructive",
-            });
-            return;
-        }
+    if (!meetingsForDate || meetingsForDate.length === 0) {
+      toast({
+        title: "No meetings scheduled",
+        description: "No meetings scheduled for the selected date to copy.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        for (const meeting of meetingsForDate) {
-            await handleSendEmail(meeting);
-        }
-    };
+    let meetingsText = `Meetings for ${format(selectedDate, 'PPP')}:\n\n`;
+    meetingsForDate.forEach((meeting, index) => {
+      meetingsText += `Meeting ${index + 1}:\n`;
+      meetingsText += `Title: ${meeting.title}\n`;
+      meetingsText += `Date: ${format(new Date(meeting.date), 'PPP')}\n`;
+      meetingsText += `Time: ${meeting.time}\n`;
+      meetingsText += `Participants: ${meeting.participants.join(', ')}\n`;
+      meetingsText += `Description: ${meeting.description}\n\n`;
+    });
 
-    const handleSendEmail = async (values: Meeting) => {
-        const emailList = values.participants;
-        if (!emailList || emailList.length === 0) {
-            toast({
-                title: "No participants added",
-                description: "Please add participants before sending the email.",
-                variant: "destructive",
-            });
-            return;
-        }
+    try {
+      await navigator.clipboard.writeText(meetingsText);
+      toast({
+        title: "Meetings Copied!",
+        description: "All meeting details for this date have been copied to your clipboard.",
+      });
+    } catch (error) {
+      console.error("Failed to copy meetings to clipboard", error);
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy meeting details to clipboard. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
-        const email = {
-            to: values.participants,
-            subject: `Meeting: ${values.title} - ${format(new Date(values.date), 'PPP')}`,
-            body: `
-        <h2>Meeting Details</h2>
-        <p><strong>Title:</strong> ${values.title}</p>
-        <p><strong>Date:</strong> ${format(new Date(values.date), 'PPP')}</p>
-        <p><strong>Time:</strong> ${values.time}</p>
-        <p><strong>Description:</strong> ${values.description}</p>
-        <p>Please be on time and prepared for the meeting.</p>
-      `,
-        };
-
-        try {
-            await sendEmail(email);
-            toast({
-                title: "Email sent.",
-                description: "Email has been sent to the participants.",
-            });
-        } catch (error) {
-            console.error("Failed to send email", error);
-            toast({
-                title: "Failed to send email.",
-                description: "There was an error sending the email. Please try again.",
-                variant: "destructive",
-            });
-        }
-    };
 
   return (
     <div className="w-full">
@@ -134,17 +117,18 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ selectedDate, meetingsForDate, 
                             <p className="font-semibold text-md">{meeting.title}</p>
                             <p className="text-sm text-muted-foreground mt-1">{meeting.time}</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Attendees: {meeting.participants.map(email => email.split('@')[0]).join(', ')}
+                                Attendees: {meeting.participants.map((email: string) => email.split('@')[0]).join(', ')}
                             </p>
                         </div>
                     ))}
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={handleSendEmailForDate}
+                        onClick={handleCopyAllMeetings}
                         className="bg-accent text-accent-foreground shadow-sm hover:bg-accent/80 mt-4"
                     >
-                        Send Email for All Meetings
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy All Meetings to Clipboard
                     </Button>
                 </div>
             ) : (
